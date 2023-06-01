@@ -11,6 +11,8 @@ const saveJSON = (key, data) => {
 // eslint-disable-next-line react/prop-types
 const GithubUserUseLocalStorage = ({ login }) => {
   const [data, setData] = useState(loadJSON(`user:${login}`));
+  const [error, setError] = useState();
+  const [loading, setLoading] = useState(false);
 
   // 첫번째 훅: data를 로컬스토리지에 저장
   useEffect(() => {
@@ -34,15 +36,41 @@ const GithubUserUseLocalStorage = ({ login }) => {
     if (!login) return;
     if (data && data.login === login) return;
 
+    setLoading(true);
+
     fetch(`https://api.github.com/users/${login}`)
       .then((res) => res.json())
       .then(setData)
-      .catch(console.error);
+      .then(() => setLoading(false))
+      .catch(setError);
   }, [login]);
 
-  if (data) return <pre>{JSON.stringify(data, null, 2)}</pre>;
+  if (loading) return <h1>Loading...</h1>;
+  if (error) {
+    return <pre>{JSON.stringify(error, null, 2)}</pre>;
+  }
+  if (!data) return null;
 
-  return null;
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}
+    >
+      <img
+        src={data.avatar_url}
+        alt={data.login}
+        style={{ width: 200, borderRadius: '50%' }}
+      />
+      <div>
+        <h1>{data.login}</h1>
+        {data.name && <p>{data.name}</p>}
+        {data.location && <p>{data.location}</p>}
+      </div>
+    </div>
+  );
 };
 
 export default GithubUserUseLocalStorage;
